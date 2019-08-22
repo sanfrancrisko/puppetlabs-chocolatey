@@ -10,7 +10,6 @@ describe 'package resource' do
       package { "#{package_name}":
         ensure   => present,
         provider => chocolatey,
-        source   => 'https://artifactory.delivery.puppetlabs.net/artifactory/api/nuget/choco-pipeline-tests/'
       }
     MANIFEST
   end
