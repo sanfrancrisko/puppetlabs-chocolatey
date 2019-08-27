@@ -35,5 +35,6 @@ jobs:
       with:
         puppet_gem_version: ${{ matrix.puppet_gem_version }}
         check: ${{ matrix.check }}
+        bundler_args: ''
       env:
         TARGET_HOST: localhost
