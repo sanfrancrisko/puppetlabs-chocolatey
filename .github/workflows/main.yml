@@ -30,23 +30,10 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby_version }}
 
-    - name: Install bundle
-      shell: powershell
+    - name: Spec Tests
+      uses: RandomNoun7/actions/modules/litmus_spec@add-windows-modules-support
+      with:
+        puppet_gem_version: ${{ matrix.puppet_gem_version }}
+        check: ${{ matrix.check }}
       env:
-        PUPPET_GEM_VERSION: ${{ matrix.puppet_gem_version }}
         TARGET_HOST: localhost
-      run: |
-        git config --system core.longpaths true 
-        gem install bundler
-        bundle install --jobs 4 --retry 2
-        type Gemfile.lock
-
-    - name: Run check
-      shell: powershell
-      run: |
-        bundle exec puppet -V
-        ruby -v
-        gem -v
-        bundle -v
-        bundle exec rake spec_prep
-        bundle exec rake ${{ matrix.check }}
