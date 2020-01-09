@@ -2,8 +2,7 @@
 version: 1.1.x.{build}
 branches:
   only:
-    - master
-    - release
+    - appveyor-test
 skip_commits:
   message: /^\(?doc\)?.*/
 clone_depth: 10
@@ -51,6 +50,28 @@ for:
       - ACCEPTANCE: yes
   install:
     - set PATH=C:\Ruby%RUBY_VERSION%\bin;%PATH%
+    - ps: |
+        if($env:APPVEYOR_SCHEDULED_BUILD -eq "true") {
+          if($PUPPET_GEM_VERSION -eq '~> 5.0') {
+            $collection = 'puppet5-nightly'
+          }
+          else {
+             $collection = 'puppet6-nightly'
+          }
+
+          $source = "http://nightlies.puppet.com/downloads/gems/$collection/puppet-latest-x64-mingw32.gem"
+          $local_gems_location = "vendor\gems"
+
+          Invoke-WebRequest $source -OutFile "puppet.gem"
+
+          New-Item -ItemType Directory -Force -Path $local_gems_location
+          gem unpack puppet.gem --target $local_gems_location
+
+          $puppet_gem_version = (cat "$local_gems_location\puppet\lib\puppet\version.rb" | where { $_ -imatch " PUPPETVERSION"}).Split("=")[1].Trim(' ', "'")
+
+          $env:PUPPET_GEM_PATH = "file://$pwd\$local_gems_location\puppet"
+          $env:PUPPET_GEM_VERSION = $puppet_gem_version
+        }
     - bundle install --jobs 4 --retry 2
     - type Gemfile.lock
   test_script:

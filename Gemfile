@@ -7,7 +7,7 @@ def location_for(place_or_version, fake_version = nil)
   if place_or_version && (git_url = place_or_version.match(git_url_regex))
     [fake_version, { git: git_url[:url], branch: git_url[:branch], require: false }].compact
   elsif place_or_version && (file_url = place_or_version.match(file_url_regex))
-    ['>= 0', { path: File.expand_path(file_url[:path]), require: false }]
+    [fake_version || '>= 0', { path: File.expand_path(file_url[:path]), require: false }]
   else
     [place_or_version, { require: false }]
   end
@@ -36,12 +36,17 @@ group :system_tests do
 end
 
 puppet_version = ENV['PUPPET_GEM_VERSION']
+puppet_path = ENV['PUPPET_GEM_PATH']
 facter_version = ENV['FACTER_GEM_VERSION']
 hiera_version = ENV['HIERA_GEM_VERSION']
 
 gems = {}
 
-gems['puppet'] = location_for(puppet_version)
+if puppet_path
+  gems['puppet'] = location_for(puppet_path, puppet_version)
+else
+  gems['puppet'] = location_for(puppet_version)
+end
 
 # If facter or hiera versions have been specified via the environment
 # variables
@@ -49,7 +54,7 @@ gems['puppet'] = location_for(puppet_version)
 gems['facter'] = location_for(facter_version) if facter_version
 gems['hiera'] = location_for(hiera_version) if hiera_version
 
-if Gem.win_platform? && puppet_version =~ %r{^(file:///|git://)}
+if Gem.win_platform? && (puppet_version =~ %r{^(file:///|git://)} || puppet_path =~ %r{^(file://|git://)})
   # If we're using a Puppet gem on Windows which handles its own win32-xxx gem
   # dependencies (>= 3.5.0), set the maximum versions (see PUP-6445).
   gems['win32-dir'] =      ['<= 0.4.9', require: false]
